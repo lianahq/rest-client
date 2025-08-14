@@ -36,7 +36,7 @@ class RestClient {
 
 	protected function request($path, $contents, $method) {
 		$md5 = md5($contents);
-		$datetime = new \DateTime(null, new \DateTimeZone('Europe/Helsinki'));
+		$datetime = new \DateTime('now', new \DateTimeZone('Europe/Helsinki'));
 		$timestamp = $datetime->format('c');
 		$url = $this->api_url . '/api/v'. $this->api_version .'/' . $path;
 
