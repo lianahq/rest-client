@@ -194,7 +194,7 @@ Golang
 	package main
 
 	import (
-		mailerapi "example/golang"
+		lianaApi "example/golang"
 		"fmt"
 		b64 "encoding/base64"
 	)
@@ -210,21 +210,21 @@ Golang
 		// Call V1 getRecipient
 
 		// Create client
-		mailerV1, err := mailerapi.NewRestClient(apiUser, apiSecret, apiUrl, apiVersion, apiRealm)
+		clientV1, err := lianaApi.NewRestClient(apiUser, apiSecret, apiUrl, apiVersion, apiRealm)
 
 		// Define parameters
-		gerRecipientParams := []interface{}{
+		getRecipientParams := []interface{}{
 			12345, // recipient id
 		}
 
 		// Call endpoint
-		resp, err := mailerV1.Call("getRecipient", gerRecipientParams)
+		resp, err := clientV1.Call("getRecipient", getRecipientParams)
 
 		if err != nil {
 			panic("API returned an error: " + err.Error())
 		}
 
-		// Go thru response
+		// Go through response
 		v1RespMap, ok := resp.(map[string]interface{})
 		if ok {
 			recipient := v1RespMap["recipient"].(map[string]interface{})
@@ -236,7 +236,7 @@ Golang
 
 		// Create client
 		apiVersion = 2
-		mailerV2, err := mailerapi.NewRestClient(apiUser, apiSecret, apiUrl, apiVersion, apiRealm)
+		clientV2, err := lianaApi.NewRestClient(apiUser, apiSecret, apiUrl, apiVersion, apiRealm)
 
 		// Define parameters
 
@@ -256,13 +256,13 @@ Golang
 		}
 
 		// Call endpoint
-		resp, err = mailerV2.Call("import/mailinglist", importMailingListParams)
+		resp, err = clientV2.Call("import/mailinglist", importMailingListParams)
 
 		if err != nil {
 			panic("API returned an error: " + err.Error())
 		}
 
-		// Go thru response
+		// Go through response
 		v2RespMap, ok := resp.(map[string]interface{})
 		if ok {
 			fmt.Printf("V2 - import/mailinglist: List import started, list_id %+v\n", v2RespMap["list_id"])
@@ -273,16 +273,16 @@ Golang
 
 		// Create client
 		apiVersion = 3
-		mailerV3, err := mailerapi.NewRestClient(apiUser, apiSecret, apiUrl, apiVersion, apiRealm)
+		clientV3, err := lianaApi.NewRestClient(apiUser, apiSecret, apiUrl, apiVersion, apiRealm)
 
 		// Call endpoint
-		resp, err = mailerV3.Call("events?at_start=2025-08-21T12:00:00&at_end=2025-08-22T12:00:00", nil, "GET")
+		resp, err = clientV3.Call("events?at_start=2025-08-21T12:00:00&at_end=2025-08-22T12:00:00", nil, "GET")
 
 		if err != nil {
 			panic("API returned an error: " + err.Error())
 		}
 
-		// Go thru response
+		// Go through response
 		v3RespMap, ok := resp.([]interface{})
 		if ok {
 			fmt.Printf("V3 - events: Got following results:\n")
