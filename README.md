@@ -8,45 +8,293 @@ Usage
 
 PHP
 
-	<?php
-	require 'php/RestClient.php';
-	$client = new LianaTech\RestClient(<API_USER>, <API_KEY>, <API_URL>, <API_VERSION>, <REALM>);
-	try {
-		$res = $client->call('pingpong', array('ping' => 'foo'), 'POST');
-	} catch (LianaTech\RestClientAuthorizationException $e) {
+    <?php
+    $user_id = <API_USER>;
+    $secret_key = <API_SECRET>;
+    $url = <API_URL>;
+    $realm = <API_REALM>;
+    $api_version = 1;
+
+    require_once 'rest-client/php/RestClient.php';
+
+    // Call V1 getRecipient
+
+    // Create client
+    $clientV1 = new \LianaTech\RestClient($user_id, $secret_key, $url, $api_version, $realm);
+
+    // Define parameters
+    $params = array(
+        12345 // recipient id
+    );
+
+    // Call endpoint
+    try {
+        $res = $clientV1->call('getRecipient', $params);
+    } catch (LianaTech\RestClientAuthorizationException $e) {
         echo "\n\tERROR: Authorization failed\n\n";
     } catch (LianaTech\APIException $e) {
-        echo  "\n\nERROR: API exception : " . $e->getMessage() . "\n\n";
-    } catch (exception $e) {
-        echo "\n\tERROR: " . $e->getmessage() . "\n\n";
+        echo "\n\tERROR: API Exception: " . $e->getMessage() . "\n\n";
+    } catch (Exception $e) {
+        echo "\n\tERROR: " . $e->getMessage() . "\n\n";
+    }
+
+    $res = $res['result'];
+    echo sprintf("V1 - getRecipient: Got recipient id: %s email: %s\n", $res['recipient']['id'], $res['recipient']['email']);
+
+
+    // Call V2 import mailinglist
+
+    // Create client
+    $clientV2 = new \LianaTech\RestClient($user_id, $secret_key, $url, 2, $realm);
+
+    // Define parameters
+    $csv_data = "email;some-property\nrecipient-1@example.com;some-value-1\nrecipient-2@example.com;some-value-2";
+
+    $params = array(
+        'name' => 'new list',
+        'data' => base64_encode($csv_data),
+        'type' => 'csv',
+        'truncate' => false
+    );
+
+    // Call endpoint
+    try {
+        $res = $clientV2->call('import/mailinglist', $params);
+    } catch (LianaTech\RestClientAuthorizationException $e) {
+        echo "\n\tERROR: Authorization failed\n\n";
+    } catch (LianaTech\APIException $e) {
+        echo "\n\tERROR: API Exception: " . $e->getMessage() . "\n\n";
+    } catch (Exception $e) {
+        echo "\n\tERROR: " . $e->getMessage() . "\n\n";
+    }
+
+    $res = $res['result'];
+    echo sprintf("V2 - import/mailinglist: List created/updated, list_id %s\n", $res['list_id']);
+
+
+    // Call V3 events
+
+    // Create client
+    $clientV3 = new \LianaTech\Restclient($user_id, $secret_key, $url, 3, $realm);
+
+    // Call endpoint
+    try {
+        $res = $clientV3->call('events?at_start=2023-06-20T12:00:00&at_end=2023-06-22T12:00:00', array(), 'GET');
+    } catch (LianaTech\RestClientAuthorizationException $e) {
+        echo "\n\tERROR: Authorization failed\n\n";
+    } catch (LianaTech\APIException $e) {
+        echo "\n\tERROR: API Exception: " . $e->getMessage() . "\n\n";
+    } catch (Exception $e) {
+        echo "\n\tERROR: " . $e->getMessage() . "\n\n";
+    }
+
+    echo "V3 - events: Got following results:\n";
+    foreach ($res['items'] as $item) {
+        echo sprintf("\tat: %s, recipient: %s, event: %s\n", $item['at'], $item['recipient']['email'], $item['type']);
     }
 
 Python
 
-	import sys
-	sys.path.append('./python')
+    import sys
+    sys.path.append('./rest-client/python')
 
-	from RestClient import RestClient, APIException
+    if sys.version_info[0] == 3:
+        import base64
 
-	api_user = <API_USER_ID>
-	api_secret = <API_KEY>
-	api_url = <API_URL>
-	api_realm = <API_REALM>
-	api_version = <API_VERSION>
+    from RestClient import RestClient, APIException
 
-	client = RestClient(api_user, api_secret, api_url, api_version, api_realm)
+    api_user = <API_USER_ID>
+    api_secret = <API_SECRET>
+    api_url = <API_URL>
+    api_realm = <API_REALM>
+    api_version = 1
 
-	try:
-		data = client.call('echoMessage', ['Hello World!'], 'POST')
-	except APIException as e:
-		response = client.get_http_response()
-		print('API call failed: '+ str(e))
-		print(response.status_code)
-		print(response.headers)
-		print(response.text)
-		exit(1)
+    # Call V1 getRecipient
 
-	print(data)
+    # Create client
+    client_v1 = RestClient(api_user, api_secret, api_url, api_version, api_realm)
+
+    # Define parameters
+    params = [
+        12345 # recipient id
+    ]
+
+    # Call endpoint
+    try:
+        data = client_v1.call('getRecipient', params)
+    except APIException as e:
+        response = client_v1.get_http_response()
+        print('API call failed: ' + str(e))
+        print(response.status_code)
+        print(response.headers)
+        print(response.text)
+        exit(1)
+
+    # Print response data
+    print("V1 - getRecipient: Got recipient id: {}, email: {}\n".format(data['recipient']['id'], data['recipient']['email']))
+
+
+    # Call V2 import mailinglist
+
+    # Create client
+    client_v2 = RestClient(api_user, api_secret, api_url, 2, api_realm)
+
+    # Define parameters
+    csv_data = "email;some-property\nrecipient-1@example.com;some-value-1\nrecipient-2@example.com;some-value-2"
+
+    if sys.version_info[0] == 3:
+        csv_data = base64.b64encode(bytes(csv_data, 'utf-8')).decode('ascii')
+    else:
+        csv_data = csv_data.encode('base64')
+
+    params = {
+        'name' : 'new list',
+        'data' : csv_data,
+        'type' : 'csv',
+        'truncate' : False
+    }
+
+    # Call endpoint
+    try:
+        data = client_v2.call('import/mailinglist', params)
+    except APIException as e:
+        response = client_v2.get_http_response()
+        print('API call failed: ' + str(e))
+        print(response.status_code)
+        print(response.headers)
+        print(response.text)
+        exit(1)
+
+    print("V2 - import/mailinglist: List created/updated, list_id {}\n".format(data['list_id']))
+
+
+    # Call V3 events
+
+    # Create client
+    client_v3 = RestClient(api_user, api_secret, api_url, 3, api_realm)
+
+    # Call endpoint
+    try:
+        data = client_v3.call('events?at_start=2023-06-20T12:00:00&at_end=2023-06-22T12:00:00', [], 'GET')
+    except APIException as e:
+        response = client_v3.get_http_response()
+        print('API call failed: ' + str(e))
+        print(response.status_code)
+        print(response.headers)
+        print(response.text)
+        exit(1)
+
+    print("V3 - events: Got following results:\n")
+    for item in data['items']:
+        print("\tat: {}, recipient: {}, event: {}\n".format(item['at'], item['recipient']['email'], item['type']))
+
+
+Golang
+
+	package main
+
+	import (
+		lianaApi "example/golang"
+		"fmt"
+		b64 "encoding/base64"
+	)
+	func main() {
+
+		// API Credentials
+		apiUser := <API_USER>
+		apiSecret := "<API_SECRET>"
+		apiUrl := "<API_URL>"
+		apiVersion := <API_VERSION>
+		apiRealm := "<API_REALM>"
+
+		// Call V1 getRecipient
+
+		// Create client
+		clientV1, err := lianaApi.NewRestClient(apiUser, apiSecret, apiUrl, apiVersion, apiRealm)
+
+		// Define parameters
+		getRecipientParams := []interface{}{
+			12345, // recipient id
+		}
+
+		// Call endpoint
+		resp, err := clientV1.Call("getRecipient", getRecipientParams)
+
+		if err != nil {
+			panic("API returned an error: " + err.Error())
+		}
+
+		// Go through response
+		v1RespMap, ok := resp.(map[string]interface{})
+		if ok {
+			recipient := v1RespMap["recipient"].(map[string]interface{})
+			fmt.Printf("V1 - getRecipient: Got recipient id: %+v email: %+v\n", recipient["id"], recipient["email"])
+		}
+
+
+		// Call V2 import mailinglist
+
+		// Create client
+		apiVersion = 2
+		clientV2, err := lianaApi.NewRestClient(apiUser, apiSecret, apiUrl, apiVersion, apiRealm)
+
+		// Define parameters
+
+		csvData := "email;some-property\nrecipient-1@example.com;some-value-1\nrecipient-2@example.com;some-value-2"
+
+		// v2 functions take params with keys, tags used here since lowercase type is restricted
+		importMailingListParams := struct{
+			ListName string `json:"name"`
+			Data string `json:"data"`
+			Type string `json:"type"`
+			Truncate bool `json:"truncate"`
+		}{
+			ListName: "new list from go client",
+			Data: b64.StdEncoding.EncodeToString([]byte(csvData)),
+			Type: "csv",
+			Truncate: false,
+		}
+
+		// Call endpoint
+		resp, err = clientV2.Call("import/mailinglist", importMailingListParams)
+
+		if err != nil {
+			panic("API returned an error: " + err.Error())
+		}
+
+		// Go through response
+		v2RespMap, ok := resp.(map[string]interface{})
+		if ok {
+			fmt.Printf("V2 - import/mailinglist: List import started, list_id %+v\n", v2RespMap["list_id"])
+		}
+
+
+		// Call V3 events
+
+		// Create client
+		apiVersion = 3
+		clientV3, err := lianaApi.NewRestClient(apiUser, apiSecret, apiUrl, apiVersion, apiRealm)
+
+		// Call endpoint
+		resp, err = clientV3.Call("events?at_start=2025-08-21T12:00:00&at_end=2025-08-22T12:00:00", nil, "GET")
+
+		if err != nil {
+			panic("API returned an error: " + err.Error())
+		}
+
+		// Go through response
+		v3RespMap, ok := resp.([]interface{})
+		if ok {
+			fmt.Printf("V3 - events: Got following results:\n")
+			for _, v := range v3RespMap {
+				event := v.(map[string]interface{})
+				event_recipient := event["recipient"].(map[string]interface{})
+				fmt.Printf("\tat: %+v, type: %+v recipient %+v: %+v\n", event["at"], event["type"], event_recipient["id"], event_recipient["email"])
+			}
+		}
+	}
+
+
 
 Development
 ===========
